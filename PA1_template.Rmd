@@ -68,7 +68,7 @@ I also need the average number of steps (over weekdays and weekend days) for eac
 
 Histogram with the mean total number of steps taken for each day. Missing values were ignored for this histogram.
 ```{r, echo=TRUE}
-  hist(myDatAgg$total.number.steps, 15, main="Number of steps taken per day", lab="Number of steps")
+  hist(myDatAgg$total.number.steps, 15, main="Number of steps taken per day", xlab="Number of steps")
   
   ## Calculate mean and median values of total number of steps taken per day.
   meanSteps <- mean(myDatAgg$total.number.steps, na.rm=T)
