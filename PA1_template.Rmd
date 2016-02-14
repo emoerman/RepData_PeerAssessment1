@@ -1,25 +1,133 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: 'Reproducible Research: Peer Assessment 1'
+output:
+  word_document: default
+  pdf_document: default
   html_document:
-    keep_md: true
+    keep_md: yes
 ---
 
+## Research question
+The questions that must be answered are
+* What is the mean total number of steps taken per day?
+* Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+* Are there differences in activity patterns between weekdays and weekends?
 
-## Loading and preprocessing the data
+## Preconditions and environment
+Note that the "knitr" package must be intstalled for this script to work properly since this script depends on the "knitr" package.
 
+Make sure the working directory is set properly!!
+The setwd command will only works on my system. Adjust it to your system and uncomment it if needed.
 
+```{r, echo=TRUE}
+  # Set working directory if necessary.
+  #setwd("/home/studie/Repro/RepData_PeerAssessment1")
+  library(knitr)
+  library(rmarkdown)
+  # Unzipping datafile and reading the data
+  myDat <- read.csv(unzip('activity.zip', 'activity.csv'))
+```
+
+This script was run with R version 3.2.3 on a x86_64 architecture (Intel) using linux (PC Linux OS 3.19.5) with locale settings nl-nl (Dutch).
+
+# Transformations
+
+To answer the questions I need the total number of steps made each day, so I sum the steps for each day.
+I also need the average number of steps (over all days) for each 5-minute interval, so I calculate the mean.
+I also need the average number of steps (over weekdays and weekend days) for each 5-minute interval, so I added a weekend indicator (TRUE if it is saturday or sunday) and calculate the mean.
+
+```{r, echo=TRUE}
+  myDat$isWeekend <- (weekdays(as.POSIXct(myDat$date)) %in% c("zaterdag", "zondag"))  # Dutch (my locale) for saturday and sunday.
+  ## The dataset with the daily activity pattern.
+  myDatDay <- aggregate(myDat[,c("steps")], by=list(myDat$interval), FUN=mean, na.rm=TRUE)
+  names(myDatDay) <- c("interval", "mean.number.steps")
+  
+  ## The dataset with the total number of steps per day.
+  myDatAgg <- aggregate(myDat[,c("steps")], by=list(myDat$date), FUN=sum, na.rm=TRUE)
+  names(myDatAgg) <- c("date", "total.number.steps")
+
+  ## Create a new dataset that fills in the missing values
+  ## with the mean of the corresponding 5-minute interval.
+  myDatNew <- merge(myDat, myDatDay, by="interval")
+  missingRows <- is.na(myDatNew$steps)
+  myDatNew$steps[missingRows] <- myDatNew$mean.number.steps[missingRows]
+  ## Drop the column mean.number.steps since we no longer need it.
+  myDatNew$mean.number.steps <- NULL
+
+  ## Create a new dataset (total number of steps per day) from the file where all missing values were replaced with actual  values.
+  myDatAggNew <- aggregate(myDatNew[,c("steps")], by=list(myDatNew$date), FUN=sum, na.rm=TRUE)
+  names(myDatAggNew) <- c("date", "total.number.steps")
+
+  ## The dataset with missing values replaced and the daily activity pattern split in weekend and non-weekend days.
+  myDatDayNew <- aggregate(myDatNew[,c("steps")], by=list(myDat$interval, myDat$isWeekend), FUN=mean, na.rm=TRUE)
+  names(myDatDayNew) <- c("interval", "isWeekend", "mean.number.steps")
+
+```
 
 ## What is mean total number of steps taken per day?
 
+Histogram with the mean total number of steps taken for each day. Missing values were ignored for this histogram.
+```{r, echo=TRUE}
+  hist(myDatAgg$total.number.steps, 15)
+  
+  ## Calculate mean and median values of total number of steps taken per day.
+  meanSteps <- mean(myDatAgg$total.number.steps, na.rm=T)
+  medianSteps <- median(myDatAgg$total.number.steps, na.rm=T)
+```
+
+The mean value of total number of steps taken
+per day is ```{r, echo=TRUE} meanSteps```. Missing values are ignored.
+The median value of total number of steps taken
+per day is ```{r, echo=TRUE} medianSteps```. Missing values are ignored.
 
 
 ## What is the average daily activity pattern?
+# This question translates into the more specific question:
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
+Time series plot of mean number of steps for each 5-minute interval.
+```{r, echo=TRUE}
+  plot(myDatDay$interval, myDatDay$mean.number.steps, type="l", main="Daily activity", xlab="5-minute intervals in a day", ylab="Mean number of steps")
+    
+  ## Gets the interval with the largest mean number of steps.
+  maxInterval <- myDatDay$interval[which.max(myDatDay$mean.number.steps)]
+```
+
+The 5-minute interval containing the maximum mean number of steps accross all days is ```{r, echo=TRUE} maxInterval```. Missing values are ignored.
 
 
 ## Imputing missing values
+The original dataset has missing values in the "steps" variable. There are no missing values in the "date" and "interval" variables. Missing values are replaced by the mean value of the corresponding interval.
 
+```{r, echo=TRUE}
+  nrMissing <- sum(is.na(myDat$steps))
+  percMissing <- round(100 * mean(is.na(myDat$steps)))
+```
 
+There are ```{r, echo=TRUE} nrMissing ``` rows with missing values. This is ```{r, echo=TRUE} percMissing ```% of the total.
+
+Histogram with the mean total number of steps taken for each day. For this histogram missing values were replaced by the mean value of the corresponding interval. 
+
+```{r, echo=TRUE}
+  hist(myDatAggNew$total.number.steps, 15)
+  
+  ## Calculate mean and median values of total number of steps taken per day.
+  meanStepsNew <- mean(myDatAggNew$total.number.steps, na.rm=T)
+  medianStepsNew <- median(myDatAggNew$total.number.steps, na.rm=T)
+```
+With the missing values replaced we get the following mean and median values for the total number of steps.
+The mean value of total number of steps taken
+per day is ```{r, echo=TRUE} meanStepsNew```. Missing values are ignored.
+The median value of total number of steps taken
+per day is ```{r, echo=TRUE} medianStepsNew```. Missing values are ignored.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Time series plot of mean number of steps for each 5-minute interval for weekend and weekdays.
+```{r, echo=TRUE}
+  par(mfrow=c(2,1), mar= c(3, 3, 2, 1))
+  plot(myDatDayNew$interval[myDatDayNew$isWeekend], myDatDayNew$mean.number.steps[myDatDayNew$isWeekend], type="l", main="Weekend", xlab="Interval", ylab="Number of steps")
+    
+  plot(myDatDayNew$interval[!myDatDayNew$isWeekend], myDatDayNew$mean.number.steps[!myDatDayNew$isWeekend], type="l", main="Weekdays", xlab="Interval", ylab="Number of steps")
+```
+
