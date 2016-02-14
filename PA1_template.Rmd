@@ -21,7 +21,7 @@ The setwd command will only works on my system. Adjust it to your system and unc
 
 ```{r, echo=TRUE}
   # Set working directory if necessary.
-  #setwd("/home/studie/Repro/RepData_PeerAssessment1")
+  setwd("/home/studie/Repro/RepData_PeerAssessment1")
   library(knitr)
   library(rmarkdown)
   # Unzipping datafile and reading the data
@@ -68,7 +68,7 @@ I also need the average number of steps (over weekdays and weekend days) for eac
 
 Histogram with the mean total number of steps taken for each day. Missing values were ignored for this histogram.
 ```{r, echo=TRUE}
-  hist(myDatAgg$total.number.steps, 15)
+  hist(myDatAgg$total.number.steps, 15, main="Number of steps taken per day", lab="Number of steps")
   
   ## Calculate mean and median values of total number of steps taken per day.
   meanSteps <- mean(myDatAgg$total.number.steps, na.rm=T)
@@ -109,7 +109,7 @@ There are ```{r, echo=TRUE} nrMissing ``` rows with missing values. This is ```{
 Histogram with the mean total number of steps taken for each day. For this histogram missing values were replaced by the mean value of the corresponding interval. 
 
 ```{r, echo=TRUE}
-  hist(myDatAggNew$total.number.steps, 15)
+  hist(myDatAggNew$total.number.steps, 15, main="Number of steps taken per day", xlab="Number of steps")
   
   ## Calculate mean and median values of total number of steps taken per day.
   meanStepsNew <- mean(myDatAggNew$total.number.steps, na.rm=T)
